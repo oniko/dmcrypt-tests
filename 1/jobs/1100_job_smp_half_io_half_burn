@@ -1,0 +1,32 @@
+; first half of CPUs performs i/o
+; the second one is on fire
+;
+; - start -
+[global]
+rw=${MODE}
+size=${SIZE}
+bsrange=1k-128k
+filename=${DEV}
+end_fsync=1
+cpus_allowed_policy=split
+# time_based
+# runtime=30s
+
+[job1]
+startdelay=1
+# i/o threads
+ioengine=libaio
+# cpus 0,1,2,3,4,5
+cpumask=63
+numjobs=6
+
+[job2]
+# cpu burn threads
+ioengine=cpuio
+exit_on_io_done=1
+cpuload=90
+# cpus 6,7,8,9,10,11
+cpumask=4032
+numjobs=6
+
+; - end -

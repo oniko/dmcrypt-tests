@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#DEV=/mnt/ram/test_file_00
+
+function reload_module() {
+#	modprobe dm-crypt
+	rmmod dm-crypt
+	insmod modules/$1/dm-crypt.ko
+}
+
+
+for prefix in no_patch sort ; do
+#for prefix in no_patch no_percpu per_bio_data unbound dont_allocate_wfix remove_io_pool offload sort ; do
+	reload_module $prefix
+
+	cd 1
+	./test-dm-special.sh --debugx --size 4G --log /home/okozina/dmcrypt-tests/logs_special/log_"$prefix"
+	cd ..
+done

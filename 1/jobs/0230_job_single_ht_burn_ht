@@ -1,0 +1,27 @@
+; first 2 threads perform i/o on same core (HT enabled)
+; other threads burn same core (HT enabled)
+;
+; NOTE: test is system topology dependent
+;
+; - start -
+[global]
+cpus_allowed=0,80
+cpus_allowed_policy=split
+
+[job1]
+startdelay=1s
+ioengine=libaio
+numjobs=2
+rw=${MODE}
+bsrange=1k-128k
+filename=${DEV}
+size=${SIZE}
+end_fsync=1
+
+[job2]
+ioengine=cpuio
+exit_on_io_done=1
+cpuload=${CPU_LOAD_HT}
+numjobs=2
+
+; - end -

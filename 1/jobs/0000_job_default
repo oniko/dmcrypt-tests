@@ -1,0 +1,14 @@
+; original test job by Milan Broz
+;
+; - start -
+[global]
+rw=${MODE}
+size=1G
+bsrange=1k-128k
+filename=${DEV}
+end_fsync=1
+
+[job1]
+numjobs=4
+
+; - end -

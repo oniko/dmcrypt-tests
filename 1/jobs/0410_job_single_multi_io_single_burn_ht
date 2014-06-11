@@ -1,0 +1,26 @@
+; multiple threads perform i/o and one thread burns same CPU
+;
+; - start -
+[global]
+rw=${MODE}
+size=${SIZE}
+bsrange=1k-128k
+filename=${DEV}
+end_fsync=1
+
+[job1]
+startdelay=1
+ioengine=libaio
+cpus_allowed=0
+numjobs=4
+
+[job2]
+ioengine=cpuio
+exit_on_io_done=1
+# what value is reasonable?
+cpuload=60
+cpus_allowed=0,80
+cpus_allowed_policy=split
+numjobs=2
+
+; - end -

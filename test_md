@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#DEVS="/dev/mapper/360a98000324669436c2b424f41677278 /dev/mapper/360a98000324669436c2b424f4167727a /dev/mapper/360a98000324669436c2b424f41677276 /dev/mapper/360a98000324669436c2b424f41677270"
+DEVS="/dev/sdd /dev/sde /dev/sdf /dev/sdg"
+DEVS_NUM=4
+MDDEV=md0
+
+function stop_md() {
+	mdadm --stop /dev/$MDDEV
+}
+
+function clear_devs() {
+	stop_md
+	for dev in $DEVS ; do
+		wipefs -a $dev >/dev/null
+	done
+}
+
+function create_md() { # $1 chunk
+	clear_devs
+	echo "Creating RAID over $DEVS with $1 chunk size."
+	mdadm -C -f -l 5 -n $DEVS_NUM -c $1 --assume-clean /dev/$MDDEV $DEVS
+#	mdadm -C -l 5 -n $DEVS_NUM -c $1 /dev/$MDDEV $DEVS
+	echo 1024 >/sys/block/$MDDEV/md/stripe_cache_size
+	sleep 2
+	udevadm settle
+	#cat /proc/mdstat
+}
+
+function reload_module() {
+#	modprobe dm-crypt
+	rmmod dm-crypt
+	insmod modules/$1/dm-crypt.ko
+}
+
+
+#for prefix in no_patch no_percpu per_bio_data unbound dont_allocate_wfix remove_io_pool offload sort ; do
+#for prefix in sort ; do
+for run in 1 2 3 ; do
+	for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
+		reload_module $prefix
+
+		create_md 64
+		./run_test.sh --debugv --dev /dev/$MDDEV --log /root/okozina/logs/low_mem/test-md/run_$run/log_"$prefix"_64 --testdir /root/okozina/test_dir
+
+		create_md 512
+		./run_test.sh --debugv --dev /dev/$MDDEV --log /root/okozina/logs/low_mem/test-md/run_$run/log_"$prefix"_512 --testdir /root/okozina/test_dir
+	done
+done
+
+clear_devs

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#DEV=/mnt/ram/test_file_00
+#DEV=/dev/mapper/360a98000324669436c2b424f41677272
+DEV=/dev/sdd
+
+function reload_module() {
+#	modprobe dm-crypt
+	rmmod dm-crypt
+	insmod modules/$1/dm-crypt.ko
+}
+
+for run in 1 2 3 ; do
+	for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
+	#for prefix in no_patch no_percpu per_bio_data unbound dont_allocate_wfix remove_io_pool offload sort ; do
+		reload_module $prefix
+
+		./run_test.sh --debugv --dev $DEV --log /root/okozina/logs/low_mem/test-disk/run_$run/log_"$prefix" --testdir /root/okozina/test_dir
+	done
+done

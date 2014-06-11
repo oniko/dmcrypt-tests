@@ -1,0 +1,28 @@
+; first 2 threads perform i/o on one core (HT enabled)
+; other threads burn all other cores on same NUMA node
+;
+; NOTE: this test is system topology dependent
+;
+; - start -
+#[global]
+
+[job1]
+startdelay=1s
+ioengine=libaio
+cpus_allowed=0
+rw=${MODE}
+bsrange=1k-128k
+filename=${DEV}
+size=${SIZE}
+end_fsync=1
+
+[job2]
+ioengine=cpuio
+exit_on_io_done=1
+cpuload=${CPU_LOAD_HT}
+# see attached system topology
+cpus_allowed=1-9,81-89
+cpus_allowed_policy=split
+numjobs=18
+
+; - end -

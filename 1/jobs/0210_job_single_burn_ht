@@ -1,0 +1,31 @@
+; first thread performs i/o on cpu #0
+; two other threads burn same CPU core
+; with regards to HT (enabled)
+;
+; this setup is system topology dependent (see cpus_allowed)
+;
+; - start -
+# [global]
+
+[job1]
+startdelay=1s
+ioengine=libaio
+cpus_allowed=0
+rw=${MODE}
+bsrange=1k-128k
+filename=${DEV}
+size=${SIZE}
+end_fsync=1
+
+[job2]
+# cpu burning thread(s)
+ioengine=cpuio
+# HT enabled machine. Read system topology to hit same core
+# see atached system topology
+cpus_allowed=0,80
+exit_on_io_done=1
+# experiment with following param
+cpuload=${CPU_LOAD_HT}
+numjobs=2
+
+; - end -

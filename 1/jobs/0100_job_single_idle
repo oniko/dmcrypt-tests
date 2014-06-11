@@ -1,0 +1,14 @@
+; single thread writing
+;
+; - start -
+
+[job1]
+ioengine=libaio
+rw=${MODE}
+size=${SIZE}
+bsrange=1k-128k
+filename=${DEV}
+cpus_allowed=0
+end_fsync=1
+
+; - end -

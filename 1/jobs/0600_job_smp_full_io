@@ -1,0 +1,16 @@
+; multiples threads perform i/o on all CPUs
+;
+; - start -
+
+[global]
+rw=${MODE}
+size=${SIZE}
+bsrange=1k-128k
+filename=${DEV}
+end_fsync=1
+
+[job1]
+ioengine=libaio
+numjobs=12
+
+; - end -
