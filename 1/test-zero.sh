@@ -4,6 +4,17 @@
 
 DEFAULT_LIST="read write randread randwrite rw randrw"
 
+function usage() {
+	printf	'usage:\n%s\t' $(basename $0) >&2
+	printf	'%s\n' $'--job <job_name> --jobdir <jobs_dir> [--debug print debug info]' \
+		$'\t\t[--debugx start script with set -vx ] [--keysize <num>] [--zerosize <num>]' \
+		$'\t\t[--log <log_dir>] [--cipher <cryptsetup_cipher_string>] [--size <num>]' \
+		$'\t\t[--bsize <num> test block size] [--balign <num> test offset]' \
+		$'\t\t[--modelist <\"mode1 mode2 mode3 ...\"> list of fio i/o modes]' \
+		$'\t\t[--iterations <num> number of iterations per \'modelist\']' \
+		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' >&2
+}
+
 function generate_log() {
 	echo "TEST:$(basename $2)" >> $1
 	grep -e '\(READ\|WRITE\)' $2/log >>$FILE
@@ -107,7 +118,7 @@ while [ "$#" -gt 0 ]; do
 			shift
 			;;
 		"--modelist")
-			LIST="$2"
+			MODELIST="$2"
 			shift
 			;;
 		"--iterations")
@@ -142,10 +153,6 @@ if [ -n "$DEBUG" ]; then
 	test "$DEBUG" -lt 2 || set -vx
 fi
 
-FILE=$LOGDIR/agg_1k_128k.log
-
-pdebug "FILE=$FILE"
-
 set_cleanup "_cleanup"
 
 run=0
@@ -158,10 +165,14 @@ done
 
 run=0
 while [ $run -lt $ITERATIONS ] ; do
+	FILE=$LOGDIR/run_$run/agg_1k_128k.log
+	pdebug "FILE=$FILE"
+
 	for i in $MODELIST ; do
 		generate_log $FILE "$LOGDIR/run_$run/zero-$i"
 	done
 	echo >> $FILE
+
 	run=$[run+1]
 done
 
