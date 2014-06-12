@@ -50,7 +50,8 @@ function _test() {
 	[ -d $LOGDIR/$dir ] || install -d $LOGDIR/$dir
 	cd $LOGDIR/$dir
 	echo 3 > /proc/sys/vm/drop_caches
-	DEV=$1 MODE=$3 $FIO $START_DIR/jobs/0000_job_default \
+	DEV=$1 MODE=$3 BSIZE=$BSIZE RAMP_TIME=$RAMP_TIME RANDSEED=$RANDSEED \
+		$FIO $START_DIR/jobs/0000_job_default \
 		--output=log --latency-log=log --bandwidth-log=log
 	cd $START_DIR
 }
@@ -142,6 +143,7 @@ fi
 
 #DEV_SIZE=$(blockdev --getsize $DEV)
 
+#LIST="read write randread randwrite rw randrw"
 LIST="read write randread randwrite rw randrw"
 FILE=$LOGDIR/agg_1k_128k.log
 

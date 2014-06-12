@@ -1,12 +1,14 @@
-; original test job by Milan Broz
 ;
 ; - start -
 [global]
 rw=${MODE}
-size=1G
-bsrange=1k-128k
+ba=${BALIGN}
+bs=${BSIZE}
+size=${SIZE}
 filename=${DEV}
 end_fsync=1
+randseed=${RANDSEED}
+ramp_time={$RAMP_TIME}
 
 [job1]
 numjobs=4

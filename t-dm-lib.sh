@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# #define like check
+if [ -z "$_T_DM_LIB_SH" ]; then
+
+_T_DM_LIB_SH=1
+
 DM_PATH="/dev/mapper"
 
 function lib_checkparams() {
@@ -49,3 +54,5 @@ set -eE
 trap 'ret=$?;cleanup;exit $ret' EXIT INT TERM
 trap 'set +vx;STACKTRACE;' ERR
 trap 'ret=$?;STACKTRACE;exit $ret' ERR
+
+fi
