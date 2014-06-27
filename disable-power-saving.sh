@@ -15,12 +15,16 @@ function disable_cpu_throttling()
 
 	test -d /sys/devices/system/cpu/cpu0/cpuidle || return 0
 
-	for cpu in /sys/devices/system/cpu/cpu* ; do
-		test ${cpu: -7} != "cpuidle" || continue
+	count=0
+
+	while [ $count -lt 999 ] ; do
+		cpu=/sys/devices/system/cpu/cpu$count
+		test -d $cpu || break
 		for cstate in $cpu/cpuidle/state* ; do
 			test ${cstate##*/state} -ne 0 || continue
 			echo 1 > $cstate/disable
 		done
+		count=$[count+1]
 	done
 }
 
@@ -34,11 +38,15 @@ function enable_cpu_throttling()
 
 	test -d /sys/devices/system/cpu/cpu0/cpuidle || return 0
 
-	for cpu in /sys/devices/system/cpu/cpu* ; do
-		test ${cpu: -7} != "cpuidle" || continue
+	count=0
+
+	while [ $count -lt 999 ] ; do
+		cpu=/sys/devices/system/cpu/cpu$count
+		test -d $cpu || break
 		for cstate in $cpu/cpuidle/state* ; do
 			test ${cstate##*/state} -ne 0 || continue
 			echo 0 > $cstate/disable
 		done
+		count=$[count+1]
 	done
 }
