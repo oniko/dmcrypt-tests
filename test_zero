@@ -1,17 +1,83 @@
 #!/bin/bash
 
-test $# -gt 2 || {
-	echo "provide randseed" >&2
+
+function reload_module() {
+        rmmod dm-crypt
+        insmod modules/$1/dm-crypt.ko || exit 1
+}
+
+function usage() {
+	echo "$0 <randseed> </absolute/path/to/fio/binary>" >&2
+}
+
+test $# -gt 1 || {
+        usage
 	exit 1
 }
 
-function reload_module() {
-	rmmod dm-crypt
-	insmod modules/$1/dm-crypt.ko
-}
+for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
+        # reload_module $prefix
+
+	cd 1
+
+        ./test-zero.sh --debug --randseed $1 --iterations 20 --job 0000_job_default --jobdir /home/okozina/work_nfs/git-repos/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_seq/bsize_512B/log_"$prefix" --modelist read --ioengine libaio --fio $2 --ramp_time 0 --numjobs 1 --size 512M
+
+	cd ..
+	exit 0
+
+        ./test-zero.sh --debug --randseed $1 --bsize 4k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_seq/bsize_4KiB/log_"$prefix" --modelist read
+
+        ./test-zero.sh --debug --randseed $1 --bsize 64k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_seq/bsize_64KiB/log_"$prefix" --modelist read
+
+        ./test-zero.sh --debug --randseed $1 --bsize 128k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_seq/bsize_128KiB/log_"$prefix" --modelist read
+
+	cd ..
+done
 
 for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
-	reload_module $prefix
+        reload_module $prefix
 
-	./1/test_zero.sh --debugv --log /root/okozina/logs/logs_zero/log_"$prefi" --job 
+	cd 1
+
+        ./test-zero.sh --debug --randseed $1 --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_write_seq/bsize_512B/log_"$prefix" --modelist "read write"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 4k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_write_seq/bsize_4KiB/log_"$prefix" --modelist "read write"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 64k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_write_seq/bsize_64KiB/log_"$prefix" --modelist "read write"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 128k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_write_seq/bsize_128KiB//log_"$prefix" --modelist "read write"
+
+	cd ..
+done
+
+for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
+        reload_module $prefix
+
+	cd 1
+
+        ./test-zero.sh --debug --randseed $1 --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randread_seq/bsize_512B/log_"$prefix" --modelist "read randread"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 4k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randread_seq/bsize_4KiB/log_"$prefix" --modelist "read randread"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 64k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randread_seq/bsize_64KiB/log_"$prefix" --modelist "read randread"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 128k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randread_seq/bsize_128KiB/log_"$prefix" --modelist "read randread"
+	
+	cd ..
+done
+
+for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
+        reload_module $prefix
+
+	cd 1
+
+        ./test-zero.sh --debug --randseed $1 --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randwrite_seq/bsize_512B/log_"$prefix" --modelist "read randwrite"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 4k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randwrite_seq/bsize_4KiB/log_"$prefix" --modelist "read randwrite"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 64k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randwrite_seq/bsize_64KiB/log_"$prefix" --modelist "read randwrite"
+
+        ./test-zero.sh --debug --randseed $1 --bsize 128k --iterations 20 --job 0000_job_default --jobdir /root/okozina/dmcrypt-tests/1/jobs --log /root/okozina/logs/test_zero/read_randwrite_seq/bsize_128KiB/log_"$prefix" --modelist "read randwrite"
+
+	cd ..
 done
