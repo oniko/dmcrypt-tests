@@ -11,6 +11,6 @@ randseed=${RANDSEED}
 ramp_time={$RAMP_TIME}
 
 [job1]
-numjobs=4
+numjobs=${NUMJOBS}
 
 ; - end -
