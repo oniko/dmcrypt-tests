@@ -1,0 +1,17 @@
+#!/bin/bash
+
+test $# -gt 2 || {
+	echo "provide randseed" >&2
+	exit 1
+}
+
+function reload_module() {
+	rmmod dm-crypt
+	insmod modules/$1/dm-crypt.ko
+}
+
+for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  ; do
+	reload_module $prefix
+
+	./1/test_zero.sh --debugv --log /root/okozina/logs/logs_zero/log_"$prefi" --job 
+done
