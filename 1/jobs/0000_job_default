@@ -1,6 +1,7 @@
 ;
 ; - start -
 [global]
+ioengine=${IOENGINE}
 rw=${MODE}
 ba=${BALIGN}
 bs=${BSIZE}

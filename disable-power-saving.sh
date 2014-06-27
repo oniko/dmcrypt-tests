@@ -5,8 +5,6 @@
 # values.
 #
 
-. ./t-dm-lib.sh
-
 function disable_cpu_throttling()
 {
 	pdebug "Disabling cpu throttling"
@@ -15,7 +13,7 @@ function disable_cpu_throttling()
 	
 	test -f /sys/devices/system/cpu/cpufreq/boost && echo 0 > /sys/devices/system/cpu/cpufreq/boost
 
-	test -d /sys/devices/system/cpu/cpu0/cpuidle || exit 0
+	test -d /sys/devices/system/cpu/cpu0/cpuidle || return 0
 
 	for cpu in /sys/devices/system/cpu/cpu* ; do
 		test ${cpu: -7} != "cpuidle" || continue
@@ -34,7 +32,7 @@ function enable_cpu_throttling()
 
 	test -f /sys/devices/system/cpu/cpufreq/boost && echo 1 > /sys/devices/system/cpu/cpufreq/boost
 
-	test -d /sys/devices/system/cpu/cpu0/cpuidle || exit 0
+	test -d /sys/devices/system/cpu/cpu0/cpuidle || return 0
 
 	for cpu in /sys/devices/system/cpu/cpu* ; do
 		test ${cpu: -7} != "cpuidle" || continue
@@ -44,6 +42,3 @@ function enable_cpu_throttling()
 		done
 	done
 }
-
-disable_cpu_throttling
-enable_cpu_throttling

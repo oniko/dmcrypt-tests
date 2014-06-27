@@ -1,18 +1,20 @@
 #!/bin/bash
 
 . ./t-test-dm-lib.sh
+. ../disable-power-saving.sh
 
 DEFAULT_LIST="read write randread randwrite rw randrw"
 
 function usage() {
 	printf	'usage:\n%s\t' $(basename $0) >&2
-	printf	'%s\n' $'--job <job_name> --jobdir <jobs_dir> [--debug print debug info]' \
+	printf	'%s\n' $'--job <job_name> --jobdir <jobs_dir> --fio <full fio path> [--debug print debug info]' \
 		$'\t\t[--debugx start script with set -vx ] [--keysize <num>] [--zerosize <num>]' \
 		$'\t\t[--log <log_dir>] [--cipher <cryptsetup_cipher_string>] [--size <num>]' \
 		$'\t\t[--bsize <num> test block size] [--balign <num> test offset]' \
 		$'\t\t[--modelist <\"mode1 mode2 mode3 ...\"> list of fio i/o modes]' \
 		$'\t\t[--iterations <num> number of iterations per \'modelist\']' \
-		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' >&2
+		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
+		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' >&2
 }
 
 function generate_log() {
@@ -28,6 +30,8 @@ function _cleanup() {
 	if [ -b "$DM_PATH/tst_zero" ]; then
 		tdm_dm_remove tst_zero
 	fi
+
+	enable_cpu_throttling
 }
 
 function check_params() {
@@ -74,11 +78,17 @@ function check_params() {
 	ITERATIONS=${ITERATIONS:-3}
 	pdebug "ITERATIONS=$ITERATIONS"
 
-	RAMP_TIME=${RAMPTIME:-1s}
+	RAMP_TIME=${RAMP_TIME:-1s}
 	pdebug "RAMP_TIME=$RAMP_TIME"
 
 	RANDSEED=${RANDSEED:-$RANDOM}
 	pdebug "RANDSEED=$RANDSEED"
+
+	NUMJOBS=${NUMJOBS:-10}
+	pdebug "NUMJOBS=$NUMJOBS"
+
+	IOENGINE=${IOENGINE:-sync}
+	pdebug "IOENGINE=$IOENGINE"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -141,6 +151,18 @@ while [ "$#" -gt 0 ]; do
 			RANDSEED="$2"
 			shift
 			;;
+		"--numjobs")
+			NUMJOBS="$2"
+			shift
+			;;
+		"--fio")
+			FIO="$2"
+			shift
+			;;
+		"--ioengine")
+			IOENGINE="$2"
+			shift
+			;;
 		*)
 			usage
 			exit 1;
@@ -154,6 +176,8 @@ if [ -n "$DEBUG" ]; then
 fi
 
 set_cleanup "_cleanup"
+
+disable_cpu_throttling
 
 run=0
 while [ $run -lt $ITERATIONS ] ; do

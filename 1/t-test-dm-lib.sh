@@ -2,8 +2,6 @@
 
 . ../t-dm-lib.sh
 
-FIO=/home/okozina/fio-2.1.9/fio
-
 function tdm_checkparams {
 	test -n "$JOB" || {
 		echo "--job parameter is mandatory" >&2
@@ -12,6 +10,16 @@ function tdm_checkparams {
 
 	test -n "$JOBSDIR" || {
 		echo "--jobdir parameter is mandatory" >&2
+		return 100
+	}
+
+	test -n "$FIO" || {
+		echo "--fio parameter is mandatory"
+		return 100
+	}
+
+	test -n "$IOENGINE" || {
+		echo "--ioengine parameter is mandatory"
 		return 100
 	}
 }
@@ -35,9 +43,27 @@ function tdm_test() {
 	pdebug "Running $dir, size:" $(blockdev --getsize64 $1)
 	[ -d $5/$dir ] || install -d $5/$dir
 	cd $5/$dir
+
+	{
+		echo "DEV=${1:-unset}"
+		echo "MODE=${3:-unset}"
+		echo "BALIGN=${BALIGN:-unset}"
+		echo "BSIZE=${BSIZE:-unset}"
+		echo "RAMP_TIME=${RAMP_TIME:-unset}"
+		echo "RANDSEED=${RANDSEED:-unset}"
+		echo "SIZE=${SIZE:-unset}"
+		echo "NUMJOBS=${NUMJOBS:-unset}"
+		echo "IOENGINE=${IOENGINE:-unset}"
+		echo "FIO=${FIO:-unset}"
+		echo "--- job file ---"
+		cat $JOBSDIR/$4
+	} > ./job.params
+
 	echo 3 > /proc/sys/vm/drop_caches
+
 	DEV=$1 MODE=$3 BALIGN=$BALIGN BSIZE=$BSIZE RAMP_TIME=$RAMP_TIME \
-		RANDSEED=$RANDSEED SIZE=$SIZE $FIO $JOBSDIR/$4 \
+		RANDSEED=$RANDSEED SIZE=$SIZE NUMJOBS=$NUMJOBS \
+		IOENGINE=$IOENGINE $FIO $JOBSDIR/$4 \
 		--output=log --bandwidth-log=log
 #		--output=log --latency-log=log --bandwidth-log=log
 	cd $old_dir
@@ -66,6 +92,7 @@ function tdm_test_zero() {
 
 # $1 log dir
 function tdm_remove_tmp_log_files() {
-find "$1" -type f \( -size 0 -or \! \( -name log -or -name agg_1k_128k.log \) \) \
-	-exec rm -f {} \;
+	find "$1" -type f \
+		\( -size 0 -or \! \( -name log -or -name agg_1k_128k.log -or -name job.params \) \) \
+		-exec rm -f {} \;
 }
