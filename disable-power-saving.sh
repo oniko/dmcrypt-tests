@@ -5,9 +5,13 @@
 # values.
 #
 
+CPUFREQ=$(which cpupower)
+
 function disable_cpu_throttling()
 {
 	pdebug "Disabling cpu throttling"
+
+	test -x $CPUFREQ && $CPUFREQ frequency-set -g performance
 
 	test -f /sys/devices/system/cpu/intel_pstate/no_turbo && echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
 	
@@ -31,6 +35,8 @@ function disable_cpu_throttling()
 function enable_cpu_throttling()
 {
 	pdebug "Enabling cpu throttling"
+
+	test -x $CPUFREQ && $CPUFREQ frequency-set -g ondemand
 
 	test -f /sys/devices/system/cpu/intel_pstate/no_turbo && echo 0 > /sys/devices/system/cpu/intel_pstate/no_turbo
 
