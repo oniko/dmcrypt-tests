@@ -30,8 +30,6 @@ function _cleanup() {
 	if [ -b "$DM_PATH/tst_zero" ]; then
 		tdm_dm_remove tst_zero
 	fi
-
-	enable_cpu_throttling
 }
 
 function check_params() {
@@ -176,8 +174,6 @@ if [ -n "$DEBUG" ]; then
 fi
 
 set_cleanup "_cleanup"
-
-disable_cpu_throttling
 
 run=0
 while [ $run -lt $ITERATIONS ] ; do
