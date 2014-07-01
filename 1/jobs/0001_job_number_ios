@@ -1,0 +1,17 @@
+;
+; - start -
+[global]
+ioengine=${IOENGINE}
+rw=${MODE}
+bs=${BSIZE}
+size=${SIZE}
+filename=${DEV}
+end_fsync=1
+randseed=${RANDSEED}
+ramp_time={$RAMP_TIME}
+number_ios=${NUMBER_IOS}
+
+[job1]
+numjobs=${NUMJOBS}
+
+; - end -

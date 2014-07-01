@@ -55,6 +55,7 @@ function tdm_test() {
 		echo "NUMJOBS=${NUMJOBS:-unset}"
 		echo "IOENGINE=${IOENGINE:-unset}"
 		echo "FIO=${FIO:-unset}"
+		echo "NUMBER_IOS=${NUMBER_IOS:-unset}"
 		echo "--- job file ---"
 		cat $JOBSDIR/$4
 	} > ./job.params

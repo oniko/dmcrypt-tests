@@ -14,7 +14,8 @@ function usage() {
 		$'\t\t[--modelist <\"mode1 mode2 mode3 ...\"> list of fio i/o modes]' \
 		$'\t\t[--iterations <num> number of iterations per \'modelist\']' \
 		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
-		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' >&2
+		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
+		$'\t\t[--number_ios <num> number of bsized i/os to perform]' >&2
 }
 
 function generate_log() {
@@ -87,6 +88,8 @@ function check_params() {
 
 	IOENGINE=${IOENGINE:-sync}
 	pdebug "IOENGINE=$IOENGINE"
+
+	pdebug "NUMBER_IOS=${NUMBER_IOS:-'not set'}"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -159,6 +162,10 @@ while [ "$#" -gt 0 ]; do
 			;;
 		"--ioengine")
 			IOENGINE="$2"
+			shift
+			;;
+		"--number_ios")
+			NUMBER_IOS="$2"
 			shift
 			;;
 		*)
