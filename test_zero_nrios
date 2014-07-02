@@ -16,7 +16,7 @@ test $# -gt 1 || {
 	exit 1
 }
 
-BSIZE_LIST="512 2k 4k 8k 16k 32k 64k 128k"
+BSIZE_LIST="512 2048 4096 8192 16348 32768 65536 131072"
 
 ZEROSIZE=$((3 * 1024 * 1024 * 1024 / 512))
 
@@ -34,9 +34,9 @@ for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pendin
 	modelist="read"
 	for bsize in $BSIZE_LIST; do
 		COUNT=$((SIZE / bsize))
-		./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job 0000_job_default \
+		./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job 0001_job_number_ios \
 			--jobdir /home/okozina/dmcrypt-tests/1/jobs \
-			--log /home/okozina/logs/test_zero/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+			--log /home/okozina/logs/test_zero_nrs/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
 			--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 0 --numjobs 1 \
 			--bsize $bsize --zerosize $ZEROSIZE --number_ios $COUNT
 	done
@@ -44,9 +44,9 @@ for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pendin
 	modelist="write"
 	for bsize in $BSIZE_LIST; do
 		COUNT=$((SIZE / bsize))
-		./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job 0000_job_default \
+		./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job 0001_job_number_ios \
 			--jobdir /home/okozina/dmcrypt-tests/1/jobs \
-			--log /home/okozina/logs/test_zero/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+			--log /home/okozina/logs/test_zero_nrs/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
 			--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 0 --numjobs 1 \
 			--bsize $bsize --zerosize $ZEROSIZE --number_ios $COUNT
 	done
