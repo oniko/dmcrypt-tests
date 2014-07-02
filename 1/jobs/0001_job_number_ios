@@ -4,7 +4,6 @@
 ioengine=${IOENGINE}
 rw=${MODE}
 bs=${BSIZE}
-size=${SIZE}
 filename=${DEV}
 end_fsync=1
 randseed=${RANDSEED}
