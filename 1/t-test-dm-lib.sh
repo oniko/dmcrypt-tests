@@ -97,3 +97,10 @@ function tdm_remove_tmp_log_files() {
 		\( -size 0 -or \! \( -name log -or -name agg_1k_128k.log -or -name job.params \) \) \
 		-exec rm -f {} \;
 }
+
+# $1 agg file to append
+# $2 source dir
+function tdm_generate_log() {
+	echo "TEST:$(basename $2)" >> $1
+	grep -e '\(READ\|WRITE\)' $2/log >>$1
+}

@@ -6,8 +6,8 @@ DEFAULT_LIST="read write randread randwrite rw randrw"
 
 function usage() {
 	printf	'usage:\n%s\t' $(basename $0) >&2
-	printf	'%s\n' $'--job <job_name> --jobdir <jobs_dir> --fio <full fio path> [--debug print debug info]' \
-		$'\t\t[--debugx start script with set -vx ] [--keysize <num>] [--zerosize <num>]' \
+	printf	'%s\n' $'--job <job_name> --jobdir <jobs_dir> --fio <full fio path> --dev <device>' \
+		$'\t\t[--debug print debug info] [--debugx start script with set -vx ] [--keysize <num>]' \
 		$'\t\t[--log <log_dir>] [--cipher <cryptsetup_cipher_string>] [--size <num>]' \
 		$'\t\t[--bsize <num> test block size] [--balign <num> test offset]' \
 		$'\t\t[--modelist <\"mode1 mode2 mode3 ...\"> list of fio i/o modes]' \
@@ -21,15 +21,9 @@ function _cleanup() {
 	if [ -b "$DM_PATH/tst_crypt" ]; then
 		tdm_dm_remove tst_crypt
 	fi
-
-	if [ -b "$DM_PATH/tst_zero" ]; then
-		tdm_dm_remove tst_zero
-	fi
 }
 
 function check_params() {
-	
-	DEV="/tmp/dummy"
 
         lib_checkparams || {
                 usage
@@ -41,13 +35,8 @@ function check_params() {
 		exit 100
 	}
 
-	unset DEV
-
         KEY_SIZE=${KEY_SIZE:-256}
         pdebug "KEY_SIZE=$KEY_SIZE"
-
-        DEV_ZERO_SIZE=${DEV_ZERO_SIZE:-$((1 * 1024 * 1024 * 1024 / 512))}
-        pdebug "DEV_ZERO_SIZE=$DEV_ZERO_SIZE"
 
         CIPHER=${CIPHER:-aes-xts-plain64}
         pdebug "CIPHER=$CIPHER"
@@ -94,12 +83,12 @@ while [ "$#" -gt 0 ]; do
 		"--debugx")
 			DEBUG=2
 			;;
-		"--keysize")
-			KEY_SIZE="$2"
+		"--dev")
+			DEV="$2"
 			shift
 			;;
-		"--zerosize")
-			DEV_ZERO_SIZE="$2"
+		"--keysize")
+			KEY_SIZE="$2"
 			shift
 			;;
 		"--log")
@@ -179,7 +168,8 @@ set_cleanup "_cleanup"
 run=0
 while [ $run -lt $ITERATIONS ] ; do
 	for i in $MODELIST ; do
-		tdm_test_zero $i $DEV_ZERO_SIZE $JOB $LOGDIR/run_$run
+		tdm_test 	$DEV disk_nocrypt $i $JOB $LOGDIR/run_$run
+		tdm_test_disk 	$DEV disk	  $i $JOB $LOGDIR/run_$run
 	done
 	run=$[run+1]
 done
@@ -190,7 +180,8 @@ while [ $run -lt $ITERATIONS ] ; do
 	pdebug "FILE=$FILE"
 
 	for i in $MODELIST ; do
-		tdm_generate_log $FILE "$LOGDIR/run_$run/zero-$i"
+		tdm_generate_log $FILE "$LOGDIR/run_$run/disk_nocrypt-$i"
+		tdm_generate_log $FILE "$LOGDIR/run_$run/disk-$i"
 	done
 	echo >> $FILE
 
