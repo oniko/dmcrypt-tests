@@ -56,6 +56,7 @@ function tdm_test() {
 		echo "IOENGINE=${IOENGINE:-unset}"
 		echo "FIO=${FIO:-unset}"
 		echo "NUMBER_IOS=${NUMBER_IOS:-unset}"
+		echo "IODEPTH=${IODEPTH:-unset}"
 		echo "--- job file ---"
 		cat $JOBSDIR/$4
 	} > ./job.params
@@ -64,8 +65,8 @@ function tdm_test() {
 
 	DEV=$1 MODE=$3 BALIGN=$BALIGN BSIZE=$BSIZE RAMP_TIME=$RAMP_TIME \
 		RANDSEED=$RANDSEED SIZE=$SIZE NUMJOBS=$NUMJOBS \
-		IOENGINE=$IOENGINE NUMBER_IOS=$NUMBER_IOS $FIO $JOBSDIR/$4 \
-		--output=log --bandwidth-log=log
+		IOENGINE=$IOENGINE NUMBER_IOS=$NUMBER_IOS IODEPTH=$IODEPTH \
+		$FIO $JOBSDIR/$4 --output=log --bandwidth-log=log
 #		--output=log --latency-log=log --bandwidth-log=log
 	cd $old_dir
 }

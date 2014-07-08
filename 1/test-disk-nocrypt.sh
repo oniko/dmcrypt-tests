@@ -7,20 +7,14 @@ DEFAULT_LIST="read write randread randwrite rw randrw"
 function usage() {
 	printf	'usage:\n%s\t' $(basename $0) >&2
 	printf	'%s\n' $'--job <job_name> --jobdir <jobs_dir> --fio <full fio path> --dev <device>' \
-		$'\t\t[--debug print debug info] [--debugx start script with set -vx ] [--keysize <num>]' \
-		$'\t\t[--log <log_dir>] [--cipher <cryptsetup_cipher_string>] [--size <num>]' \
+		$'\t\t[--debug print debug info] [--debugx start script with set -vx ]' \
+		$'\t\t[--log <log_dir>] [--size <num>]' \
 		$'\t\t[--bsize <num> test block size] [--balign <num> test offset]' \
 		$'\t\t[--modelist <\"mode1 mode2 mode3 ...\"> list of fio i/o modes]' \
 		$'\t\t[--iterations <num> number of iterations per \'modelist\']' \
 		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
 		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
 		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' >&2
-}
-
-function _cleanup() {
-	if [ -b "$DM_PATH/tst_crypt" ]; then
-		tdm_dm_remove tst_crypt
-	fi
 }
 
 function check_params() {
@@ -34,12 +28,6 @@ function check_params() {
 		usage
 		exit 100
 	}
-
-        KEY_SIZE=${KEY_SIZE:-256}
-        pdebug "KEY_SIZE=$KEY_SIZE"
-
-        CIPHER=${CIPHER:-aes-xts-plain64}
-        pdebug "CIPHER=$CIPHER"
 
         LOGDIR=${LOGDIR:-$(pwd)/log}
         test -d $LOGDIR || mkdir $LOGDIR
@@ -90,16 +78,8 @@ while [ "$#" -gt 0 ]; do
 			DEV="$2"
 			shift
 			;;
-		"--keysize")
-			KEY_SIZE="$2"
-			shift
-			;;
 		"--log")
 			LOGDIR="$2"
-			shift
-			;;
-		"--cipher")
-			CIPHER="$2"
 			shift
 			;;
 		"--size")
@@ -170,12 +150,10 @@ if [ -n "$DEBUG" ]; then
 	test "$DEBUG" -lt 2 || set -vx
 fi
 
-set_cleanup "_cleanup"
-
 run=0
 while [ $run -lt $ITERATIONS ] ; do
 	for i in $MODELIST ; do
-		tdm_test_disk 	$DEV disk	  $i $JOB $LOGDIR/run_$run
+		tdm_test 	$DEV disk_nocrypt $i $JOB $LOGDIR/run_$run
 	done
 	run=$[run+1]
 done
@@ -186,7 +164,7 @@ while [ $run -lt $ITERATIONS ] ; do
 	pdebug "FILE=$FILE"
 
 	for i in $MODELIST ; do
-		tdm_generate_log $FILE "$LOGDIR/run_$run/disk-$i"
+		tdm_generate_log $FILE "$LOGDIR/run_$run/disk_nocrypt-$i"
 	done
 	echo >> $FILE
 
