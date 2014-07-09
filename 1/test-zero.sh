@@ -14,7 +14,8 @@ function usage() {
 		$'\t\t[--iterations <num> number of iterations per \'modelist\']' \
 		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
 		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
-		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' >&2
+		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' \
+		$'\t\t[--rq_affinity <num>]' >&2
 }
 
 function _cleanup() {
@@ -85,6 +86,8 @@ function check_params() {
 	pdebug "IODEPTH=$IODEPTH"
 
 	pdebug "JOB=$JOB"
+
+	pdebug "RQAFFINITY=${RQAFFINITY:-'not set'}"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -165,6 +168,10 @@ while [ "$#" -gt 0 ]; do
 			;;
 		"--iodepth")
 			IODEPTH="$2"
+			shift
+			;;
+		"--rq_affinity")
+			RQAFFINITY="$2"
 			shift
 			;;
 		*)
