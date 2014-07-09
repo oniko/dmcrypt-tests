@@ -52,10 +52,6 @@ function check_params() {
         CIPHER=${CIPHER:-aes-xts-plain64}
         pdebug "CIPHER=$CIPHER"
 
-        LOGDIR=${LOGDIR:-$(pwd)/log}
-        test -d $LOGDIR || mkdir $LOGDIR
-        pdebug "LOGDIR=$LOGDIR"
-
         SIZE=${SIZE:-1G}
         pdebug "SIZE=$SIZE"
 
@@ -86,7 +82,9 @@ function check_params() {
 	pdebug "NUMBER_IOS=${NUMBER_IOS:-'not set'}"
 
 	IODEPTH=${IODEPTH:-1}
-	pdebug "IODEPTH=$IODEPTH}"
+	pdebug "IODEPTH=$IODEPTH"
+
+	pdebug "JOB=$JOB"
 }
 
 while [ "$#" -gt 0 ]; do

@@ -29,10 +29,6 @@ function check_params() {
 		exit 100
 	}
 
-        LOGDIR=${LOGDIR:-$(pwd)/log}
-        test -d $LOGDIR || mkdir $LOGDIR
-        pdebug "LOGDIR=$LOGDIR"
-
         SIZE=${SIZE:-1G}
         pdebug "SIZE=$SIZE"
 

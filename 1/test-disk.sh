@@ -41,10 +41,6 @@ function check_params() {
         CIPHER=${CIPHER:-aes-xts-plain64}
         pdebug "CIPHER=$CIPHER"
 
-        LOGDIR=${LOGDIR:-$(pwd)/log}
-        test -d $LOGDIR || mkdir $LOGDIR
-        pdebug "LOGDIR=$LOGDIR"
-
         SIZE=${SIZE:-1G}
         pdebug "SIZE=$SIZE"
 
