@@ -81,7 +81,7 @@ function set_rq_affinity() {
 	test -L $kname && kname=$(readlink $1)
 	kname=$(basename $kname)
 
-	pdebug "going to set /sys/block/$kname/rq_affinity to $2"
+	pdebug "going to set /sys/block/$kname/queue/rq_affinity to $2"
 	echo $2 > /sys/block/$kname/queue/rq_affinity
 }
 
