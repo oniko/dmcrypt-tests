@@ -82,7 +82,7 @@ function set_rq_affinity() {
 	kname=$(basename $kname)
 
 	pdebug "going to set /sys/block/$kname/rq_affinity to $2"
-	echo $2 > /sys/block/$kname/rq_affinity
+	echo $2 > /sys/block/$kname/queue/rq_affinity
 }
 
 
@@ -92,8 +92,8 @@ function set_rq_affinity() {
 # $4 job file
 # $5 run dir
 function tdm_test_disk() {
-	echo "pass" | cryptsetup create -c $CIPHER -s $KEY_SIZE tst_crypt $1
 	set_rq_affinity $1 $RQAFFINITY
+	echo "pass" | cryptsetup create -c $CIPHER -s $KEY_SIZE tst_crypt $1
 	tdm_test $DM_PATH/tst_crypt $2 $3 $4 $5
 	tdm_dm_remove tst_crypt
 }
