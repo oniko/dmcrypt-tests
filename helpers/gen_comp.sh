@@ -45,31 +45,6 @@ while [ $run -lt $RUNS ]; do
 		done
 	done
 
-#	./pstats.pl	$1/log_no_patch/run_$run/agg_1k_128k.log \
-#			$1/log_no_percpu/run_$run/agg_1k_128k.log \
-#			> $res/no_patch-no_percpu.cmp
-#
-#	./pstats.pl	$1/log_no_patch/run_$run/agg_1k_128k.log \
-#			$1/log_use_per_bio_data/run_$run/agg_1k_128k.log \
-#			> $res/no_patch-use_per_bio_data.cmp
-#
-#	./pstats.pl	$1/log_no_patch/run_$run/agg_1k_128k.log \
-#			$1/log_dont_alloc_to_remove_io_pending/run_$run/agg_1k_128k.log \
-#			> $res/no_patch-remove_io_pending.cmp
-#
-#	./pstats.pl	$1/log_no_percpu/run_$run/agg_1k_128k.log \
-#			$1/log_use_per_bio_data/run_$run/agg_1k_128k.log \
-#			> $res/no_percpu-use_per_bio_data.cmp
-#
-#	./pstats.pl	$1/log_no_percpu/run_$run/agg_1k_128k.log \
-#			$1/log_dont_alloc_to_remove_io_pending/run_$run/agg_1k_128k.log \
-#			> $res/no_percpu-remove_io_pending.cmp
-#
-#	./pstats.pl	$1/log_use_per_bio_data/run_$run/agg_1k_128k.log \
-#			$1/log_dont_alloc_to_remove_io_pending/run_$run/agg_1k_128k.log \
-#			> $res/use_per_bio_data-remove_io_pending.cmp
-#
 	run=$[run+1]
 done
 
-#log_no_patch  log_no_percpu  log_use_per_bio_data log_dont_alloc_to_remove_io_pending
