@@ -25,6 +25,14 @@ function generate_cmp() {
 		local modules_rest="$*"
 		for second in $modules_rest ; do
 			echo -n "comparing: 'log_$first/run_$run' with 'log_$second/run_$run'"
+			test -f $DIR/log_$first/run_$run/agg_1k_128k.log || {
+				echo "...first is missing: skipped"
+				continue
+			}
+			test -f $DIR/log_$second/run_$run/agg_1k_128k.log || {
+				echo "...second is missing: skipped"
+				continue
+			}
 			./pstats.pl	$DIR/log_$first/run_$run/agg_1k_128k.log \
 					$DIR/log_$second/run_$run/agg_1k_128k.log \
 					> $res/"$first"-"$second".cmp 2> /dev/null || exit 1
