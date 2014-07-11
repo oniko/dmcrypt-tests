@@ -85,6 +85,19 @@ function set_rq_affinity() {
 	echo $2 > /sys/block/$kname/queue/rq_affinity
 }
 
+# $1 dev path
+# $2 nr_requets value
+function set_nr_requests() {
+	test -n "$2" || return 0
+
+	local kname=$1
+
+	test -L $kname && kname=$(readlink $1)
+	kname=$(basename $kname)
+
+	pdebug "going to set /sys/block/$kname/queue/nr_requests to $2"
+	echo $2 > /sys/block/$kname/queue/nr_requests
+}
 
 # $1 backing device
 # $2 test name
@@ -93,6 +106,7 @@ function set_rq_affinity() {
 # $5 run dir
 function tdm_test_disk() {
 	set_rq_affinity $1 $RQAFFINITY
+	set_nr_requests $1 $NR_REQUESTS
 	echo "pass" | cryptsetup create -c $CIPHER -s $KEY_SIZE tst_crypt $1
 	tdm_test $DM_PATH/tst_crypt $2 $3 $4 $5
 	tdm_dm_remove tst_crypt

@@ -14,7 +14,8 @@ function usage() {
 		$'\t\t[--iterations <num> number of iterations per \'modelist\']' \
 		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
 		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
-		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' >&2
+		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' \
+		$'\t\t[--nr_requests <num> ]' >&2
 }
 
 function _cleanup() {
@@ -72,6 +73,8 @@ function check_params() {
 	pdebug "IODEPTH=$IODEPTH"
 
 	pdebug "NUMBER_IOS=${NUMBER_IOS:-'not set'}"
+
+	pdebug "NR_REQUESTS=${NR_REQUESTS:-'not set'}"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -152,6 +155,10 @@ while [ "$#" -gt 0 ]; do
 			;;
 		"--iodepth")
 			IODEPTH="$2"
+			shift
+			;;
+		"--nr_requests")
+			NR_REQUESTS="$2"
 			shift
 			;;
 		*)
