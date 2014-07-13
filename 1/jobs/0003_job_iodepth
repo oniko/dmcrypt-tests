@@ -9,6 +9,7 @@ size=${SIZE}
 filename=${DEV}
 randseed=${RANDSEED}
 iodepth=${IODEPTH}
+iodepth_batch=${IODEPTH_BATCH}
 buffered=0
 direct=1
 end_fsync=1
