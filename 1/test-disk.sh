@@ -15,7 +15,7 @@ function usage() {
 		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
 		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
 		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' \
-		$'\t\t[--nr_requests <num>] [--iodepth_batch <num>]' >&2
+		$'\t\t[--nr_requests <num>] [--iodepth_batch <num>] [--rq_affinity <0-2>]' >&2
 }
 
 function _cleanup() {
@@ -78,6 +78,8 @@ function check_params() {
 
 	IODEPTH_BATCH=${IODEPTH_BATCH:-1}
 	pdebug "IODEPTH_BATCH=$IODEPTH_BATCH"
+
+	pdebug "RQAFFINITY=${RQAFFINITY:-'not set'}"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -166,6 +168,10 @@ while [ "$#" -gt 0 ]; do
 			;;
 		"--iodepth_batch")
 			IODEPTH_BATCH="$2"
+			shift
+			;;
+		"--rq_affinity")
+			RQAFFINITY="$2"
 			shift
 			;;
 		*)
