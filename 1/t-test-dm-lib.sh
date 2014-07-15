@@ -52,6 +52,7 @@ function tdm_test() {
 		echo "RAMP_TIME=${RAMP_TIME:-unset}"
 		echo "RANDSEED=${RANDSEED:-unset}"
 		echo "SIZE=${SIZE:-unset}"
+		echo "IO_LIMIT=${IO_LIMIT:-unset}"
 		echo "NUMJOBS=${NUMJOBS:-unset}"
 		echo "IOENGINE=${IOENGINE:-unset}"
 		echo "FIO=${FIO:-unset}"
@@ -69,7 +70,7 @@ function tdm_test() {
 		RANDSEED=$RANDSEED SIZE=$SIZE NUMJOBS=$NUMJOBS \
 		IOENGINE=$IOENGINE NUMBER_IOS=$NUMBER_IOS IODEPTH=$IODEPTH \
 		IODEPTH_BATCH_SUBMIT=$IODEPTH_BATCH_SUBMIT \
-		IODEPTH_BATCH_COMPLETE=$IODEPTH_BATCH_COMPLETE \
+		IODEPTH_BATCH_COMPLETE=$IODEPTH_BATCH_COMPLETE IO_LIMIT=$IO_LIMIT \
 		$FIO $JOBSDIR/$4 --output=log --latency-log=log --bandwidth-log=log
 	cd $old_dir
 }

@@ -15,7 +15,8 @@ function usage() {
 		$'\t\t[--ramp_time <num> fio ramp time] [--randseed <num> fio randseed]' \
 		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
 		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' \
-		$'\t\t[--iodepth_batch_complete <num>] [--iodepth_batch_submit <num>]' >&2
+		$'\t\t[--iodepth_batch_complete <num>] [--iodepth_batch_submit <num>]' \
+		$'\t\t[--rq_affinity <0-2>] [--io_limit <num>] [--nr_requests <num>]' >&2
 }
 
 function check_params() {
@@ -62,11 +63,18 @@ function check_params() {
 
 	pdebug "NUMBER_IOS=${NUMBER_IOS:-'not set'}"
 
+	pdebug "NR_REQUESTS=${NR_REQUESTS:-'not set'}"
+
 	IODEPTH_BATCH_SUBMIT=${IODEPTH_BATCH_SUBMIT:-1}
 	pdebug "IODEPTH_BATCH_SUBMIT=$IODEPTH_BATCH_SUBMIT"
 
 	IODEPTH_BATCH_COMPLETE=${IODEPTH_BATCH_COMPLETE:-1}
 	pdebug "IODEPTH_BATCH_COMPLETE=$IODEPTH_BATCH_COMPLETE"
+
+	pdebug "RQAFFINITY=${RQAFFINITY:-'not set'}"
+
+	IO_LIMIT=${IO_LIMIT:-$SIZE}
+	pdebug "IO_LIMIT=$IO_LIMIT"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -141,12 +149,24 @@ while [ "$#" -gt 0 ]; do
 			IODEPTH="$2"
 			shift
 			;;
+		"--nr_requests")
+			NR_REQUESTS="$2"
+			shift
+			;;
 		"--iodepth_batch_submit")
 			IODEPTH_BATCH_SUBMIT="$2"
 			shift
 			;;
 		"--iodepth_batch_complete")
 			IODEPTH_BATCH_COMPLETE="$2"
+			shift
+			;;
+		"--rq_affinity")
+			RQAFFINITY="$2"
+			shift
+			;;
+		"--io_limit")
+			IO_LIMIT="$2"
 			shift
 			;;
 		*)

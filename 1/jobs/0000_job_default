@@ -6,6 +6,7 @@ rw=${MODE}
 ba=${BALIGN}
 bs=${BSIZE}
 size=${SIZE}
+io_limit=${IO_LIMIT}
 filename=${DEV}
 end_fsync=1
 randseed=${RANDSEED}
