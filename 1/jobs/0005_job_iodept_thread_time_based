@@ -1,0 +1,26 @@
+;
+; - start -
+[global]
+thread
+time_based
+ioengine=${IOENGINE}
+rw=${MODE}
+ba=${BALIGN}
+bs=${BSIZE}
+size=${SIZE}
+io_limit=${IO_LIMIT}
+filename=${DEV}
+randseed=${RANDSEED}
+iodepth=${IODEPTH}
+iodepth_batch_submit=${IODEPTH_BATCH_SUBMIT}
+iodepth_batch_complete=${IODEPTH_BATCH_COMPLETE}
+buffered=0
+direct=1
+end_fsync=1
+
+[job1]
+numjobs=${NUMJOBS}
+runtime=20s
+ramp_time=${RAMP_TIME}
+
+; - end -
