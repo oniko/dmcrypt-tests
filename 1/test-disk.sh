@@ -190,6 +190,7 @@ while [ "$#" -gt 0 ]; do
 			shift
 			;;
 		*)
+			echo "uknown option $1" >&2
 			usage
 			exit 1;
 	esac
