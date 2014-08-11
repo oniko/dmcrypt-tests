@@ -71,7 +71,7 @@ function tdm_test() {
 		IOENGINE=$IOENGINE NUMBER_IOS=$NUMBER_IOS IODEPTH=$IODEPTH \
 		IODEPTH_BATCH_SUBMIT=$IODEPTH_BATCH_SUBMIT \
 		IODEPTH_BATCH_COMPLETE=$IODEPTH_BATCH_COMPLETE IO_LIMIT=$IO_LIMIT \
-		$FIO $JOBSDIR/$4 --output=log --latency-log=log --bandwidth-log=log
+		$FIO $JOBSDIR/$4 --output=log --bandwidth-log=log
 	cd $old_dir
 }
 
