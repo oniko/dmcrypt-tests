@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function reload_module() {
+        rmmod dm-crypt
+        insmod modules/$1/dm-crypt.ko || exit 1
+}
+
+PREFIX_DIR=/home/okozina
+LOG_DIR=$PREFIX_DIR/logs/test_cryptsetup_testsuite
+
+CRYPTSETUP_DIR=/home/okozina/cryptsetup-1.6.6.tar.xz
+
+for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  unbound offload sort ; do
+	reload_module $prefix
+
+	cd 5
+
+	echo -n "Going to test module: $prefix ..." 
+
+	./run-cryptsetup-testsuite.sh --debug --cryptsetup-dir $CRYPTSETUP_DIR --log $LOG_DIR/$prefix || {
+		echo "FAILED"
+		exit 1
+	}
+
+	echo "DONE"
+
+	cd ..
+done
