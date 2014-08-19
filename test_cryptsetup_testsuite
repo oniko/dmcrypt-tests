@@ -17,7 +17,7 @@ for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pendin
 
 	echo -n "Going to test module: $prefix ..." 
 
-	./run-cryptsetup-testsuite.sh --debug --cryptsetup-dir $CRYPTSETUP_DIR --log $LOG_DIR/$prefix || {
+	./run-cryptsetup-testsuite.sh --cryptsetup-dir $CRYPTSETUP_DIR --log $LOG_DIR/$prefix || {
 		echo "FAILED"
 		exit 1
 	}

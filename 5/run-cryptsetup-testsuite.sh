@@ -63,14 +63,15 @@ set_cleanup "_cleanup"
 
 cd $CSDIR/tests
 
-echo "going to run loopaes-test" >> $LOGDIR/cryptsetup-testsuite.log 2>&1
+echo "going to run loopaes-test" > $LOGDIR/cryptsetup-testsuite.log
 ./loopaes-test >> $LOGDIR/cryptsetup-testsuite.log 2>&1
 
-echo "going to run mode-test" >> $LOGDIR/cryptsetup-testsuite.log 2>&1
+echo "going to run mode-test" >> $LOGDIR/cryptsetup-testsuite.log
 ./mode-test >> $LOGDIR/cryptsetup-testsuite.log 2>&1
 
-echo "going to run password-hash-test" >> $LOGDIR/cryptsetup-testsuite.log 2>&1
+echo "going to run password-hash-test" >> $LOGDIR/cryptsetup-testsuite.log
 ./password-hash-test >> $LOGDIR/cryptsetup-testsuite.log 2>&1
  
-echo "going to run tcrypt-compat-test" >> $LOGDIR/cryptsetup-testsuite.log 2>&1
+echo "going to run tcrypt-compat-test" >> $LOGDIR/cryptsetup-testsuite.log
 ./tcrypt-compat-test >> $LOGDIR/cryptsetup-testsuite.log 2>&1
+
