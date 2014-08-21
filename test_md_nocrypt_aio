@@ -1,0 +1,137 @@
+#!/bin/bash
+
+. ./disable-power-saving.sh
+
+DEVS="/dev/sdd /dev/sde /dev/sdf /dev/sdg"
+DEVS_NUM=4
+MDDEV=md0
+
+function stop_md() {
+	mdadm --stop /dev/$MDDEV
+}
+
+function clear_devs() {
+	stop_md
+	for dev in $DEVS ; do
+		wipefs -a $dev >/dev/null
+	done
+}
+
+function create_md() { # $1 chunk
+	clear_devs
+	echo "Creating RAID over $DEVS with $1 chunk size."
+	mdadm -C -f -l 5 -n $DEVS_NUM -c $1 --assume-clean /dev/$MDDEV $DEVS
+#	mdadm -C -l 5 -n $DEVS_NUM -c $1 /dev/$MDDEV $DEVS
+	echo 1024 >/sys/block/$MDDEV/md/stripe_cache_size
+	sleep 2
+	udevadm settle
+	#cat /proc/mdstat
+}
+
+function reload_module() {
+        rmmod dm-crypt
+        insmod modules/$1/dm-crypt.ko || exit 1
+}
+
+function usage() {
+	echo "$0 <randseed> </absolute/path/to/fio/binary>" >&2
+}
+
+test $# -gt 1 || {
+        usage
+	exit 1
+}
+
+test -b /dev/$MDDEV && {
+	echo "Block dev exists"
+	usage
+	exit 1
+}
+
+BSIZE_LIST="512 4k 8k 16k 32k 64k 128k"
+
+ITERATIONS=10
+
+SIZE=1G
+
+IOD_LIST="1 8 32 128 256"
+
+PREFIX_DIR=/root/okozina
+LOG_DIR=$PREFIX_DIR/logs/test_md_nocrypt_aio_okozina+
+
+#job=0004_job_iodepth_thread
+job=0005_job_iodept_thread_time_based
+
+
+disable_cpu_throttling
+
+#for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending  unbound offload sort ; do
+for prefix in no_crypt ; do
+        #reload_module $prefix
+
+	cd 1
+
+	numj=1
+
+	for chunk in 64 512 ; do
+
+		for iodepth in $IOD_LIST ; do
+
+			modelist="write"
+			for bsize in $BSIZE_LIST; do
+				create_md $chunk
+				BDEV_SIZE=$(blockdev --getsize64 /dev/$MDDEV)
+				BDEV_SIZE="$[BDEV_SIZE/(1<<20)]M"
+				./test-disk-nocrypt.sh --dev /dev/$MDDEV --debug --randseed $1 --iterations $ITERATIONS --job $job \
+					--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+					--log $LOG_DIR/numj_$numj/md_$chunk/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+					--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+					--size $BDEV_SIZE --io_limit $SIZE --bsize $bsize --iodepth $iodepth --iodepth_batch_complete 0
+			done
+
+			modelist="randwrite"
+			for bsize in $BSIZE_LIST; do
+				create_md $chunk
+				BDEV_SIZE=$(blockdev --getsize64 /dev/$MDDEV)
+				BDEV_SIZE="$[BDEV_SIZE/(1<<20)]M"
+				./test-disk-nocrypt.sh --dev /dev/$MDDEV --debug --randseed $1 --iterations $ITERATIONS --job $job \
+					--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+					--log $LOG_DIR/numj_$numj/md_$chunk/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+					--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+					--size $BDEV_SIZE --io_limit $SIZE --bsize $bsize --balign $bsize --iodepth $iodepth \
+					--iodepth_batch_complete 0
+			done
+
+			modelist="read"
+			for bsize in $BSIZE_LIST; do
+				create_md $chunk
+				BDEV_SIZE=$(blockdev --getsize64 /dev/$MDDEV)
+				BDEV_SIZE="$[BDEV_SIZE/(1<<20)]M"
+				./test-disk-nocrypt.sh --dev /dev/$MDDEV --debug --randseed $1 --iterations $ITERATIONS --job $job \
+					--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+					--log $LOG_DIR/numj_$numj/md_$chunk/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+					--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+					--size $BDEV_SIZE --io_limit $SIZE --bsize $bsize --iodepth $iodepth --iodepth_batch_complete 0
+			done
+
+			modelist="randread"
+			for bsize in $BSIZE_LIST; do
+				create_md $chunk
+				BDEV_SIZE=$(blockdev --getsize64 /dev/$MDDEV)
+				BDEV_SIZE="$[BDEV_SIZE/(1<<20)]M"
+				./test-disk-nocrypt.sh --dev /dev/$MDDEV --debug --randseed $1 --iterations $ITERATIONS --job $job \
+					--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+					--log $LOG_DIR/numj_$numj/md_$chunk/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+					--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+					--size $BDEV_SIZE --io_limit $SIZE --bsize $bsize --balign $bsize --iodepth $iodepth \
+					--iodepth_batch_complete 0
+			done
+		done
+	done
+
+	cd ..
+done
+
+clear_devs
+
+enable_cpu_throttling

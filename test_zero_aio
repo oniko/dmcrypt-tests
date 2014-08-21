@@ -1,0 +1,92 @@
+#!/bin/bash
+
+. ./disable-power-saving.sh
+
+function reload_module() {
+        rmmod dm-crypt
+        insmod modules/$1/dm-crypt.ko || exit 1
+}
+
+function usage() {
+	echo "$0 <randseed> </absolute/path/to/fio/binary>" >&2
+}
+
+test $# -gt 1 || {
+        usage
+	exit 1
+}
+
+BSIZE_LIST="512 4k 8k 16k 32k 64k 128k"
+
+ITERATIONS=10
+
+SIZE=2G
+
+IOD_LIST="1 8 32 128 256"
+
+PREFIX_DIR=/root/okozina
+LOG_DIR=$PREFIX_DIR/logs/test_zero_aio_okozina+
+
+job=0005_job_iodept_thread_time_based
+#job=0004_job_iodepth_thread
+
+ZEROSIZE=$((2 * 1024 * 1024 * 1024 / 512))
+
+disable_cpu_throttling
+
+for prefix in no_patch no_percpu use_per_bio_data dont_alloc_to_remove_io_pending unbound offload sort ; do
+        reload_module $prefix
+
+	cd 1
+
+	numj=1
+
+	for iodepth in $IOD_LIST ; do
+
+		modelist="write"
+		for bsize in $BSIZE_LIST; do
+			./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job $job \
+				--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+				--log $LOG_DIR/numj_$numj/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+				--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+				--size $SIZE --bsize $bsize --iodepth $iodepth --iodepth_batch_complete 0 \
+				--zerosize $ZEROSIZE
+		done
+
+
+		modelist="randwrite"
+		for bsize in $BSIZE_LIST; do
+			./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job $job \
+				--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+				--log $LOG_DIR/numj_$numj/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+				--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+				--size $SIZE --bsize $bsize --balign $bsize --iodepth $iodepth \
+				--iodepth_batch_complete 0 --zerosize $ZEROSIZE
+		done
+
+		modelist="read"
+		for bsize in $BSIZE_LIST; do
+			./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job $job \
+				--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+				--log $LOG_DIR/numj_$numj/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+				--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+				--size $SIZE --bsize $bsize --iodepth $iodepth --iodepth_batch_complete 0 \
+				--zerosize $ZEROSIZE
+		done
+
+		modelist="randread"
+		for bsize in $BSIZE_LIST; do
+			./test-zero.sh --debug --randseed $1 --iterations $ITERATIONS --job $job \
+				--jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+				--log $LOG_DIR/numj_$numj/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_"$prefix" \
+				--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 --numjobs $numj \
+				--size $SIZE --bsize $bsize --balign $bsize --iodepth $iodepth \
+				--iodepth_batch_complete 0 --zerosize $ZEROSIZE
+		done
+
+	done
+
+	cd ..
+done
+
+enable_cpu_throttling
