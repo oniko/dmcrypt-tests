@@ -20,8 +20,12 @@ function lib_checkparams() {
 	pdebug "LOGDIR=$LOGDIR"
 }
 
+function _print() {
+	echo "$(date +%F\ %H:%M:%S) $@"
+}
+
 function pdebug() {
-	test -z "$DEBUG" || echo "$@"
+	test -z "$DEBUG" || _print "$@"
 }
 
 function cleanup() {

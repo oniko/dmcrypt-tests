@@ -40,7 +40,7 @@ function tdm_test() {
 	local old_dir=$(pwd)
 
 	dir="$2-$3"
-	pdebug "Running $dir, size:" $(blockdev --getsize64 $1)
+	_print "test $dir, ioengine:$IOENGINE, iodepth:$IODEPTH, iolimit:$IO_LIMIT, size:$SIZE, dev_size:" $(blockdev --getsz $1)
 	[ -d $5/$dir ] || install -d $5/$dir
 	cd $5/$dir
 
