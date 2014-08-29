@@ -1,0 +1,37 @@
+; 8 numa node system, half CPUs idling
+;
+; - start -
+[global]
+ioengine=${IOENGINE}
+rw=${MODE}
+ba=${BALIGN}
+bs=${BSIZE}
+size=${SIZE}
+io_limit=${IO_LIMIT}
+filename=${DEV}
+randseed=${RANDSEED}
+iodepth=${IODEPTH}
+iodepth_batch_submit=${IODEPTH_BATCH_SUBMIT}
+iodepth_batch_complete=${IODEPTH_BATCH_COMPLETE}
+buffered=0
+direct=1
+end_fsync=1
+numjobs=${NUMJOBS}
+
+[job0]
+cpus_allowed=0-9,80-89
+numa_mem_policy=local
+
+[job1]
+cpus_allowed=10-19,90-99
+numa_mem_policy=local
+
+[job2]
+cpus_allowed=20-29,100-109
+numa_mem_policy=local
+
+[job3]
+cpus_allowed=30-39,110-119
+numa_mem_policy=local
+
+; - end -
