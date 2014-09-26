@@ -16,7 +16,8 @@ function usage() {
 		$'\t\t[--numjobs <num> number of jobs] [--ioengine <engine> fio ioengine]' \
 		$'\t\t[--number_ios <num> number of bsized i/os to perform] [--iodepth <num>]' \
 		$'\t\t[--iodepth_batch_complete <num>] [--iodepth_batch_submit <num>]' \
-		$'\t\t[--rq_affinity <0-2>] [--io_limit <num>] [--nr_requests <num>]' >&2
+		$'\t\t[--rq_affinity <0-2>] [--io_limit <num>] [--nr_requests <num>]' \
+		$'\t\t[--runtime <num>]' >&2
 }
 
 function _cleanup() {
@@ -87,6 +88,8 @@ function check_params() {
 
 	IO_LIMIT=${IO_LIMIT:-$SIZE}
 	pdebug "IO_LIMIT=${IO_LIMIT}"
+
+	pdebug "RUNTIME=${RUNTIME:-'not set'}"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -187,6 +190,10 @@ while [ "$#" -gt 0 ]; do
 			;;
 		"--io_limit")
 			IO_LIMIT="$2"
+			shift
+			;;
+		"--runtime")
+			RUNTIME="$2"
 			shift
 			;;
 		*)

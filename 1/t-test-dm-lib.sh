@@ -60,6 +60,7 @@ function tdm_test() {
 		echo "IODEPTH=${IODEPTH:-unset}"
 		echo "IODEPTH_BATCH_SUBMIT=${IODEPTH_BATCH_SUBMIT:-unset}"
 		echo "IODEPTH_BATCH_COMPLETE=${IODEPTH_BATCH_COMPLETE:-unset}"
+		echo "RUNTIME=${RUNTIME:-unset}"
 		echo "--- job file ---"
 		cat $JOBSDIR/$4
 	} > ./job.params
@@ -71,6 +72,7 @@ function tdm_test() {
 		IOENGINE=$IOENGINE NUMBER_IOS=$NUMBER_IOS IODEPTH=$IODEPTH \
 		IODEPTH_BATCH_SUBMIT=$IODEPTH_BATCH_SUBMIT \
 		IODEPTH_BATCH_COMPLETE=$IODEPTH_BATCH_COMPLETE IO_LIMIT=$IO_LIMIT \
+		RUNTIME=$RUNTIME \
 		$FIO $JOBSDIR/$4 --output=log --bandwidth-log=log
 	cd $old_dir
 }
