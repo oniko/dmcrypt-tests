@@ -1,0 +1,17 @@
+; This is header for generated job aiming
+; to generate equally distributed I/O
+; from all CPU sockets
+;
+[global]
+ioengine=libaio
+rw=${MODE}
+ba=${BALIGN}
+bs=${BSIZE}
+filename=${DEV}
+iodepth=${IODEPTH}
+runtime=${RUNTIME}
+buffered=0
+direct=1
+end_fsync=1
+max_latency=180s
+; end of header part
