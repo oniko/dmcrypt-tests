@@ -25,6 +25,8 @@ function generate_job() {
 		exit 1
 	}
 
+	test -d $tmpdir || mkdir -p $tmpdir
+
 	test $io_limit_per_job -le $job_offset || io_limit_per_job=$job_offset
 
 	TMPFILE=$(mktemp --tmpdir=$tmpdir $TEMPLATE)
