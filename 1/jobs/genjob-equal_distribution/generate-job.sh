@@ -62,7 +62,7 @@ function generate_job() {
 				echo "cpus_allowed=$cpus"
 				local tmp=$[(node_offset*node_n)+(job_offset*job_on_node)]
 				tmp=$(div_round_up_modulo $tmp $ALIGNMENT)
-				echo "offset="
+				echo "offset=$tmp"
 				echo "io_limit=$io_limit_per_job"
 				echo
 
