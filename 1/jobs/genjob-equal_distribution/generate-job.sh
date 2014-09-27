@@ -2,6 +2,17 @@
 
 TEMPLATE=generated_job_file.XXXXXX
 
+ALIGNMENT=4096
+
+function div_round_up() {
+	echo $[($1+$2)/$2]
+}
+
+function div_round_up_modulo() {
+	local tmp=$(div_round_up $1 $2)
+	echo $[tmp*$2]
+}
+
 # #1 target dir
 # $2 bdev size (in bytes)
 # $3 jobs_per node
@@ -19,7 +30,7 @@ function generate_job() {
 	local cpus_allowed=$@
 
 	local node_offset=$[bdev_size/$#]
-	local job_offset=$[(node_offset/jobs_per_node)-4096]
+	local job_offset=$[node_offset/jobs_per_node]
 	test $job_offset -gt 0 || {
 		echo "job_offset <= 0" >&2
 		exit 1
@@ -49,7 +60,9 @@ function generate_job() {
 				# generated job content
 				echo "[node_$[node_n]_job$job_on_node]"
 				echo "cpus_allowed=$cpus"
-				echo "offset=$[(node_offset*node_n)+(job_offset*job_on_node)]"
+				local tmp=$[(node_offset*node_n)+(job_offset*job_on_node)]
+				tmp=$(div_round_up_modulo $tmp $ALIGNMENT)
+				echo "offset="
 				echo "io_limit=$io_limit_per_job"
 				echo
 
