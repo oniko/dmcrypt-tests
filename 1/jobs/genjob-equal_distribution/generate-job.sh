@@ -5,7 +5,7 @@ TEMPLATE=generated_job_file.XXXXXX
 ALIGNMENT=4096
 
 function div_round_up() {
-	echo $[($1+$2)/$2]
+	echo $[($1+$2-1)/$2]
 }
 
 function div_round_up_modulo() {
