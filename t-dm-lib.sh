@@ -7,6 +7,8 @@ _T_DM_LIB_SH=1
 
 DM_PATH="/dev/mapper"
 
+KEY="e6ffcfdf2e7310ecf7b03d7a0af10e42d5457f42583ae394c62ff644d50bdd95"
+
 function lib_checkparams() {
 
 	test -n "$DEV" || {
@@ -40,6 +42,18 @@ function set_cleanup() { #1 _cleanup function
 		pdebug "registering cleanup function: '$1'"
 		LIBV_CLEANUP="$1"
 	}
+}
+
+# $1 backing device
+# $2 crypt dev name
+# $3 cipher
+# $4 key
+# $5 dm-crypt switches
+function map_dmcrypt() {
+	local table="0 `blockdev --getsz $1` crypt $3 $4 0 $1 0 $5"
+	pdebug "creating dm-crypt device with table: $table"
+
+	dmsetup create $2 --table "$table"
 }
 
 # credits to LVM2

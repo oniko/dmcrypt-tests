@@ -7,10 +7,6 @@
 
 . ../t-dm-lib.sh
 
-test "$(cryptsetup --version | cut -d ' ' -f 2 | tr -d '.')" -lt 150 || FORCEPASS=--force-password
-
-KEY="e6ffcfdf2e7310ecf7b03d7a0af10e42d5457f42583ae394c62ff644d50bdd95"
-
 function usage() {
 	echo "$0 --dev <test_device_path> --testdir <test_directory_for_mounting_dev> " \
 	"[--debug print debug info] [--debugx to set -vx ] [--source <test_data_source> /usr by default] " \
@@ -257,35 +253,24 @@ START_DIR=$(pwd)
 check_params
 
 MODELIST="null aes-cbc-essiv:sha256 aes-xts-plain64"
-CRYPT_ARGS=$(echo "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus")
 FSLIST="xfs ext4 ext3"
 CDEV=crypt
 PASS=xxx
 
 set_cleanup "_cleanup"
 
-# $1 cipher
-# $2 key
-# $3 dm-crypt switches
-function map_dmcrypt() {
-	local table="0 `blockdev --getsz $DEV` crypt $1 $2 0 $DEV 0 $3"
-	pdebug "creating dm-crypt device with table: $table"
-
-	dmsetup create $CDEV --table "$table"
-}
-
 cumount
 
-for switch in $CRYPT_ARGS ; do
+for switch in "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus" ; do
 	for i in $MODELIST
 	do
 		if [ "$i" = "null" ] ; then
 			dd if=/dev/zero of=$DEV bs=1M count=4 2>/dev/null
 			sync
 			#dmsetup create $CDEV --table "0 `blockdev --getsz $DEV` crypt cipher_null-ecb-null - 0 $DEV 0 $switch"
-			map_dmcrypt cipher_null-ecb-null "-" $switch
+			map_dmcrypt $DEV $CDEV cipher_null-ecb-null "-" "$switch"
 		else
-			map_dmcrypt $i $KEY $switch
+			map_dmcrypt $DEV $CDEV $i $KEY "$switch"
 		fi
 
 		for j in $FSLIST
