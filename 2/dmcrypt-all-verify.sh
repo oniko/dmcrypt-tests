@@ -9,14 +9,14 @@
 
 test "$(cryptsetup --version | cut -d ' ' -f 2 | tr -d '.')" -lt 150 || FORCEPASS=--force-password
 
-ARCHIVE=/root/okozina/usr.tar.xz
-CHKSUMSREF=/root/okozina/checksums.ref
+KEY="e6ffcfdf2e7310ecf7b03d7a0af10e42d5457f42583ae394c62ff644d50bdd95"
 
 function usage() {
 	echo "$0 --dev <test_device_path> --testdir <test_directory_for_mounting_dev> " \
 	"[--debug print debug info] [--debugx to set -vx ] [--source <test_data_source> /usr by default] " \
 	"[--log <log_dir> ./log by default] [--dt-limit <num[gmk]> dt _limit_ parameter. default: 200m] " \
-	"[--dt-capacity dt _capacity_ parameter. default: 1g]" >&2 
+	"[--dt-capacity dt _capacity_ parameter. default: 1g] [--checksums reference checksum file]" \
+	"[--archive archive with reference files]" >&2
 }
 
 function check_params() {
@@ -65,26 +65,32 @@ function check_params() {
 			exit 100
 	esac
 
+	test -n "$ARCHIVE" || {
+		echo "--archive is mandatory"
+		usage
+		exit 100
+	}
+
+	test -n "$CHKSUMSREF" || {
+		echo "--checksums is mandatory"
+		usage
+		exit 100
+	}
+
+
 	DT_LIMIT=${DT_LIMIT:-200m}
 	pdebug "DT_LIMIT=$DT_LIMIT"
 	DT_CAP=${DT_CAP:-1g}
 	pdebug "DT_CAP=$DT_CAP"
+
+	pdebug "ARCHIVE=$ARCHIVE"
+	pdebug "CHKSUMSREF=$CHKSUMSREF"
 }
 
 function cmount() {
 	cd $TESTDIR
 	if [ ! -d $TESTDIR/tst ]; then 
 		mkdir $TESTDIR/tst
-	fi
-
-	#BDEV=$(blockdev --getsz $DEV)
-	BDEV=244189323
-
-	if ! cryptsetup isLuks $DEV 2>/dev/null; then
-		dmsetup create $CDEV --table "0 $BDEV crypt cipher_null-ecb-null - 0 $DEV 0"
-	else
-		echo "$PASS"|cryptsetup luksOpen $DEV $CDEV
-		cryptsetup resize $CDEV --size $BDEV
 	fi
 
 	case "$1" in
@@ -111,9 +117,6 @@ function cumount() {
 	sync
 	umount $TESTDIR/tst 2>/dev/null || pdebug "umount $TESTDIR/tst failed"
 	udevadm settle
-	if [ -b $DM_PATH/$CDEV ]; then
-		dmsetup remove $CDEV
-	fi
 }
 
 # TESTS
@@ -197,6 +200,14 @@ function _cleanup() {
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
+		"--archive")
+			ARCHIVE="$2"
+			shift
+			;;
+		"--checksums")
+			CHKSUMSREF="$2"
+			shift
+			;;
 		"--debug")
 			DEBUG=1
 			;;
@@ -246,29 +257,46 @@ START_DIR=$(pwd)
 check_params
 
 MODELIST="null aes-cbc-essiv:sha256 aes-xts-plain64"
+CRYPT_ARGS=$(echo "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus")
 FSLIST="xfs ext4 ext3"
 CDEV=crypt
 PASS=xxx
 
-
 set_cleanup "_cleanup"
 
+# $1 cipher
+# $2 key
+# $3 dm-crypt switches
+function map_dmcrypt() {
+	local table="0 `blockdev --getsz $DEV` crypt $1 $2 0 $DEV 0 $3"
+	pdebug "creating dm-crypt device with table: $table"
+
+	dmsetup create $CDEV --table "$table"
+}
 
 cumount
 
-for i in $MODELIST
-do
-	if [ "$i" = "null" ] ; then
-		dd if=/dev/zero of=$DEV bs=1M count=4 2>/dev/null
-		sync
-	else
-		echo "$PASS"|cryptsetup luksFormat $FORCEPASS -c $i -s 256 $DEV
-	fi
-
-	for j in $FSLIST
+for switch in $CRYPT_ARGS ; do
+	for i in $MODELIST
 	do
-		run_test "USR COPY TEST" c_usr_verify $i $j
-		run_test "FSX TEST" cfsx $i $j
-		run_test "DT TEST" cdt $i $j
+		if [ "$i" = "null" ] ; then
+			dd if=/dev/zero of=$DEV bs=1M count=4 2>/dev/null
+			sync
+			#dmsetup create $CDEV --table "0 `blockdev --getsz $DEV` crypt cipher_null-ecb-null - 0 $DEV 0 $switch"
+			map_dmcrypt cipher_null-ecb-null "-" $switch
+		else
+			map_dmcrypt $i $KEY $switch
+		fi
+
+		for j in $FSLIST
+		do
+			run_test "USR COPY TEST" c_usr_verify $i $j
+			run_test "FSX TEST" cfsx $i $j
+			run_test "DT TEST" cdt $i $j
+		done
+
+		if [ -b $DM_PATH/$CDEV ]; then
+			dmsetup remove -f $CDEV
+		fi
 	done
 done
