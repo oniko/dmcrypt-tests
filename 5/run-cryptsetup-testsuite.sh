@@ -75,3 +75,5 @@ echo "going to run password-hash-test" >> $LOGDIR/cryptsetup-testsuite.log
 echo "going to run tcrypt-compat-test" >> $LOGDIR/cryptsetup-testsuite.log
 ./tcrypt-compat-test >> $LOGDIR/cryptsetup-testsuite.log 2>&1
 
+echo "going to run device-test" >> $LOGDIR/cryptsetup-testsuite.log
+./device-test >> $LOGDIR/cryptsetup-testsuite.log 2>&1
