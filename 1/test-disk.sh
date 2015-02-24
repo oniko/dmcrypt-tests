@@ -213,21 +213,25 @@ set_cleanup "_cleanup"
 
 run=0
 while [ $run -lt $ITERATIONS ] ; do
-	for i in $MODELIST ; do
-		tdm_test_disk 	$DEV disk	  $i $JOB $LOGDIR/run_$run
+	for switch in "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus" ; do
+		for i in $MODELIST ; do
+			tdm_test_disk 	$DEV disk	  $i $JOB "$LOGDIR/${switch// /_}/run_$run" "$switch"
+		done
 	done
 	run=$[run+1]
 done
 
 run=0
 while [ $run -lt $ITERATIONS ] ; do
-	FILE=$LOGDIR/run_$run/agg_1k_128k.log
-	pdebug "FILE=$FILE"
+	for switch in "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus" ; do
+		FILE="$LOGDIR/${switch// /_}/run_$run/agg_1k_128k.log"
+		pdebug "FILE=$FILE"
 
-	for i in $MODELIST ; do
-		tdm_generate_log $FILE "$LOGDIR/run_$run/disk-$i"
+		for i in $MODELIST ; do
+			tdm_generate_log "$FILE" "$LOGDIR/${switch// /_}/run_$run/disk-$i"
+		done
+		echo >> $FILE
 	done
-	echo >> $FILE
 
 	run=$[run+1]
 done

@@ -110,10 +110,11 @@ function set_nr_requests() {
 # $3 fio i/o mode
 # $4 job file
 # $5 run dir
+# $6 dmcrypt performance switch
 function tdm_test_disk() {
 	set_rq_affinity $1 $RQAFFINITY
 	set_nr_requests $1 $NR_REQUESTS
-	echo "pass" | cryptsetup create -c $CIPHER -s $KEY_SIZE tst_crypt $1
+	map_dmcrypt $1 tst_crypt $CIPHER $KEY "$6"
 	tdm_test $DM_PATH/tst_crypt $2 $3 $4 $5
 	tdm_dm_remove tst_crypt
 }
