@@ -64,7 +64,6 @@ set_cleanup "_cleanup"
 
 check_params
 
-
 echo -n "Seeker test: " >> $LOGDIR/seeker-test.log
 date >> $LOGDIR/seeker-test.log
 
@@ -74,20 +73,28 @@ echo "Going to run seeker test on raw block device"
 echo "RAW BLOCK DEVICE" >> $LOGDIR/seeker-test.log
 ./seeker.bin $DEV $RSEED >> $LOGDIR/seeker-test.log
 
-sync
-echo 3 > /proc/sys/vm/drop_caches
-echo "Going to run seeker test on crypt device with a null cipher"
-echo "CRYPT WITH CIPHER_NULL" >> $LOGDIR/seeker-test.log
-dmsetup create $CTEST_NULL --table "0 `blockdev --getsz $DEV` crypt cipher_null-ecb-null - 0 $DEV 0"
-./seeker.bin $DM_PATH/$CTEST_NULL $RSEED >> $LOGDIR/seeker-test.log
+for switch in "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus" ; do
 
-udevadm settle
-dmsetup remove $CTEST_NULL
+	sync
+	echo 3 > /proc/sys/vm/drop_caches
+	echo "Going to run seeker test on crypt device with a null cipher"
+	echo "CRYPT WITH CIPHER_NULL" >> $LOGDIR/seeker-test.log
+	#dmsetup create $CTEST_NULL --table "0 `blockdev --getsz $DEV` crypt cipher_null-ecb-null - 0 $DEV 0"
+	map_dmcrypt $DEV $CTEST_NULL cipher_null-ecb-null "-" "$switch"
+	./seeker.bin $DM_PATH/$CTEST_NULL $RSEED >> $LOGDIR/seeker-test.log
 
-sync
-echo 3 > /proc/sys/vm/drop_caches
-echo "Going to run seeker test on crypt device with the usual cipher"
-echo "CRYPT WITH CIPHER AES-XTS-PLAIN64" >> $LOGDIR/seeker-test.log
-echo xxx | cryptsetup create -c aes-xts-plain64 -s 256 $CTEST $DEV
-./seeker.bin $DM_PATH/$CTEST $RSEED >> $LOGDIR/seeker-test.log
+	udevadm settle
+	dmsetup remove $CTEST_NULL
 
+	sync
+	echo 3 > /proc/sys/vm/drop_caches
+	echo "Going to run seeker test on crypt device with the usual cipher"
+	echo "CRYPT WITH CIPHER AES-XTS-PLAIN64" >> $LOGDIR/seeker-test.log
+	#echo xxx | cryptsetup create -c aes-xts-plain64 -s 256 $CTEST $DEV
+	map_dmcrypt $DEV $CTEST aes-xts-plain64 $KEY "$switch"
+	./seeker.bin $DM_PATH/$CTEST $RSEED >> $LOGDIR/seeker-test.log
+
+	udevadm settle
+	dmsetup remove $CTEST
+
+done
