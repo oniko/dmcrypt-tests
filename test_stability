@@ -1,0 +1,107 @@
+#!/bin/bash
+
+. ./t-dm-lib.sh
+
+function usage() {
+	echo "$0 --dev <test_dev> --log <log_dir> --testdir <path_to_test_mount_dir> --archive <path to tar.xz> --checksums <path_to_file_w/checksums" >&2
+}
+
+function reload_module() {
+        rmmod dm-crypt
+	pdebug "new module: $1/dm-crypt.ko"
+        insmod modules/$1/dm-crypt.ko || exit 1
+}
+
+function check_params() {
+
+	if [ -d "$LOGDIR" ]; then
+		echo "Logdir exists. Previous results would have been overwritten" >&2
+		return 100
+	fi
+
+	lib_checkparams || {
+		return 100;
+	}
+
+	if [ -z "$TESTDIR" ]; then
+		echo "--testdir parameter is mandatory for dmcrypt-all-verify.sh" >&2
+		return 100
+	fi
+
+	if [ -z "$CRYPTSETUP" ]; then
+		echo "--cryptsetup-dir parameter is mandatory for run-cryptsetup-testsuite.sh" >&2
+		return 100
+	fi
+
+	pdebug "TESTDIR=$TESTDIR"
+	pdebug "CRYPTSETUP=$CRYPTSETUP"
+}
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		"--dev")
+			DEV=$2;
+			shift;
+			;;
+		"--debug")
+			DEBUG=1
+			;;
+		"--debugv")
+			DEBUG=2
+			;;
+		"--log")
+			LOGDIR="$2"
+			shift
+			;;
+		"--testdir")
+			TESTDIR="$2"
+			shift
+			;;
+		"--archive")
+			ARCHIVE="$2"
+			shift
+			;;
+		"--checksums")
+			CHKSMS="$2"
+			shift
+			;;
+		"--cryptsetup-dir")
+			CRYPTSETUP="$2"
+			shift
+			;;
+		*)
+			usage;
+			exit 1;
+	esac
+	shift
+done
+
+check_params || { usage; exit 100; }
+
+if [ -n "$DEBUG" ]; then
+	test $DEBUG -lt 2 || set -vx;
+fi
+
+for prefix in switches ; do
+	reload_module $prefix
+
+	cd 2
+	pdebug "./dmcrypt-all-verify.sh --dev $DEV  --log $LOGDIR/dmcrypt-tests/stability --testdir $TESTDIR --archive $ARCHIVE --checksums $CHKSMS --debugv"
+	./dmcrypt-all-verify.sh --dev $DEV  --log $LOGDIR/stability --testdir $TESTDIR --archive $ARCHIVE --checksums $CHKSMS --debug
+	cd ..
+
+	cd 3
+	pdebug "./dmcrypt-stacked.sh --dev $DEV --log $LOGDIR/dmcrypt-tests/stability"
+	./dmcrypt-stacked.sh --dev $DEV --log $LOGDIR/stability  --debug
+	cd ..
+
+	cd 4
+	pdebug "./dmcrypt-seek-test.sh --dev $DEV --log $LOGDIR/dmcrypt-tests/stability"
+	./dmcrypt-seek-test.sh --dev $DEV --log $LOGDIR/stability  --debug
+	cd ..
+
+	cd 5
+	pdebug "./run-cryptsetup-testsuite.sh --log $LOGDIR/dmcrypt-tests/stability --cryptsetup-dir $CRYPTSETUP"
+	./run-cryptsetup-testsuite.sh --log $LOGDIR/stability --cryptsetup-dir $CRYPTSETUP
+	cd ..
+done
