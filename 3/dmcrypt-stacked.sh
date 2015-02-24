@@ -4,7 +4,7 @@
 
 function usage() {
 	echo "$0 --dev <test_device_path> [--debug] [--debugx (set -vx)] " \
-	"[--num <num> Nr. of stacked devices default: 20] [--bsize <num> block size. default: 512]" \
+	"[--num <num> Nr. of stacked devices default: 15] [--bsize <num> block size. default: 512]" \
 	"[--count <num> Nr of --bsize writes to stacked devices] [--log <logdir> default: ./log]" >&2
 }
 
@@ -15,7 +15,7 @@ function check_params() {
 		exit 100
 	}
 	
-	NUM=${NUM:-10}
+	NUM=${NUM:-15}
 	BSIZE=${BSIZE:-512}
 	COUNT=${COUNT:-102400}
 }
@@ -78,20 +78,25 @@ fi
 
 check_params
 
-echo xxx | cryptsetup create -c aes-xts-plain64 -s 256 CTEST1 $DEV
-for i in $(seq 1 $NUM); do
-	j=$i
-	i=$(($i + 1))
-	echo xxx | cryptsetup create -c aes-xts-plain64 -s 256 CTEST$i $DM_PATH/CTEST$j
-done
-
 BDEV=$(blockdev --getsize64 $DEV)
 if [ $BDEV -lt $[$BSIZE * $COUNT] ]; then
 	echo "Test device $DEV is too small"
 	exit 200
 fi
 
-echo "Test write to $(($NUM + 1)) stacked dmcrypt devices: bsize=$BSIZE, count=$COUNT"
-dd if=/dev/zero of=$DM_PATH/CTEST$(($NUM + 1)) bs=$BSIZE count=$COUNT
-echo "Test complete"
+for switch in "0" "1 same_cpu_crypt" "1 submit_from_crypt_cpus" "2 same_cpu_crypt submit_from_crypt_cpus" ; do
+
+	map_dmcrypt $DEV CTEST1 aes-xts-plain64 $KEY "$switch"
+	for i in $(seq 1 $NUM); do
+		j=$i
+		i=$(($i + 1))
+		map_dmcrypt $DM_PATH/CTEST$j CTEST$i aes-xts-plain64 $KEY "$switch"
+	done
+
+	echo "Test write to $(($NUM + 1)) stacked dmcrypt devices: bsize=$BSIZE, count=$COUNT"
+	dd if=/dev/zero of=$DM_PATH/CTEST$(($NUM + 1)) bs=$BSIZE count=$COUNT
+	echo "Test complete"
+
+	_cleanup
+done
 
