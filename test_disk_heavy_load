@@ -1,0 +1,104 @@
+#!/bin/bash
+
+. ./disable-power-saving.sh
+
+function reload_module() {
+        rmmod dm-crypt
+        insmod modules/$1/dm-crypt.ko || exit 1
+}
+
+function usage() {
+	echo "$0 <randseed> </absolute/path/to/fio/binary> <dev>" >&2
+}
+
+test $# -gt 2 || {
+        usage
+	exit 1
+}
+
+test -b $3 || {
+	echo "Block dev!"
+	usage
+	exit 1
+}
+
+SCHEDULER=cfq
+
+tmp_dev=$(basename $3)
+
+while [ ! -d /sys/block/$tmp_dev ] ; do
+	test -n $tmp_dev || exit 3
+	tmp_dev=${tmp_dev:0:$[${#tmp_dev}-1]}
+done
+
+test -f /sys/block/$tmp_dev/queue/scheduler || exit 5
+test -f /sys/block/$tmp_dev/queue/nr_requests || exit 5
+
+BSIZE_LIST="8k 16k 32k 64k 128k"
+
+ITERATIONS=5
+
+SIZE=$[1*1024*1024*1024]
+
+IOD_LIST="1 8 32 128 256"
+
+PREFIX_DIR=/home/okozina
+LOG_DIR=$PREFIX_DIR/logs/test_disk_heavy_load
+GEN_JOB_DIR=$PREFIX_DIR/generated_jobs
+
+BDEV_SIZE_B=$(blockdev --getsize64 $3)
+
+BDEV_SIZE="$[BDEV_SIZE_B/(1<<20)]M"
+
+disable_cpu_throttling
+
+#for nr_requests in 128 1000000 ; do
+for nr_requests in 128 ; do
+echo "setting nr_requests for $tmp_dev to $nr_requests"
+echo $nr_requests > /sys/block/$tmp_dev/queue/nr_requests || exit 6
+
+for scheduler in cfq deadline ; do
+echo "setting scheduler for $tmp_dev to $scheduler"
+echo $scheduler > /sys/block/$tmp_dev/queue/scheduler || exit 7
+
+
+JOB_1=$(1/jobs/genjob-equal_distribution/generate-job.sh $GEN_JOB_DIR $[BDEV_SIZE_B-(10*1024*1024)] \
+		1 $SIZE 0-5,24-29 6-11,30-35 12-17,36-41 18-23,42-47)
+JOB_5=$(1/jobs/genjob-equal_distribution/generate-job.sh $GEN_JOB_DIR $[BDEV_SIZE_B-(10*1024*1024)] \
+		5 $[SIZE/5] 0-5,24-29 6-11,30-35 12-17,36-41 18-23,42-47)
+JOB_8=$(1/jobs/genjob-equal_distribution/generate-job.sh $GEN_JOB_DIR $[BDEV_SIZE_B-(10*1024*1024)] \
+		8 $[SIZE/8] 0-5,24-29 6-11,30-35 12-17,36-41 18-23,42-47)
+
+# for prefix in no_patch dont_alloc_to_remove_io_pending unbound offload sort ; do
+#for prefix in no_patch dont_alloc_to_remove_io_pending unbound offload sort retain ; do
+# for prefix in retain_fixed ; do
+# for prefix in no_patch dont_alloc_to_remove_io_pending unbound offload sort ; do
+for prefix in switches ; do
+        reload_module $prefix
+
+	cd 1
+
+	for numj in 1 5 8 ; do
+		eval job=\$JOB_$numj
+		job=$(basename $job)
+	
+		for iodepth in $IOD_LIST ; do
+
+			modelist="write"
+			for bsize in $BSIZE_LIST; do
+				./test-disk.sh --dev $3 --debug --randseed $1 --iterations $ITERATIONS --job $job \
+					--jobdir $GEN_JOB_DIR \
+					--log $LOG_DIR/$scheduler/nr_req_$nr_requests/numj_$numj/iodepth_$iodepth/${modelist// /_}_seq/bsize_$bsize/log_"$prefix" \
+					--modelist "$modelist" --ioengine libaio --fio $2 --ramp_time 1 \
+					--numjobs $numj --size $BDEV_SIZE --io_limit $SIZE --bsize $bsize \
+					--iodepth $iodepth --iodepth_batch_complete 0 --runtime 60
+			done
+		done
+	done
+
+	cd ..
+done
+done
+done
+
+enable_cpu_throttling
