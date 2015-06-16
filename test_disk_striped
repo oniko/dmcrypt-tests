@@ -1,0 +1,69 @@
+#!/bin/bash
+
+. ./t-dm-lib.sh
+
+. ./disable-power-saving.sh
+
+DEBUG=1
+RUNTIME=30s
+PREFIX_DIR=/home/okozina
+ITERATIONS=5
+SIZE=1G
+job=00051_job_iodepth_thread_time_cap
+BSIZE_LIST="512 4k 8k 128k 512k 1m"
+IOD_LIST="4 8 32 128 256"
+
+function usage() {
+	echo "$0 </absolute/path/to/fio/binary> <chunk_size> <dev0> <dev1> [<dev2>...<devN>]" >&2
+}
+
+function dm_remove() {
+	sync
+	udevadm settle
+	blockdev --flushbufs $DM_PATH/$1
+	dmsetup remove --retry $1
+}
+
+test $# -ge 4 || {
+	usage
+	exit 1
+}
+
+FIO=$1
+shift
+CHSIZE=$1
+shift
+
+for i in $@; do
+	test -b $i || {
+		echo "$i is not a block device"
+		usage
+		exit 1
+	}
+done
+
+
+disable_cpu_throttling
+
+LOG_DIR=$PREFIX_DIR/logs/test_disk_striped
+
+for tgt in striped striped-nomerge ; do
+	devname=tst_$tgt
+	map_striped $devname $tgt $CHSIZE $@
+	BDEV_SIZE=$(blockdev --getsize64 $DM_PATH/$devname)
+	BDEV_SIZE="$[BDEV_SIZE/(1<<20)]M"
+	cd 1
+	numj=1
+	for iodepth in $IOD_LIST ; do
+		for modelist in write randwrite ; do
+			for bsize in $BSIZE_LIST; do
+				./test-disk-striped.sh --debugx --dev $DM_PATH/$devname --iterations $ITERATIONS --job $job \
+					--log $LOG_DIR/numj_$numj/iodepth_$iodepth/${modelist/ /_}_seq/bsize_$bsize/log_$tgt \
+					--modelist "$modelist" --ioengine libaio --fio $FIO --numjobs $numj --size $BDEV_SIZE \
+					--io_limit $SIZE --bsize $bsize --iodepth $iodepth --jobdir $PREFIX_DIR/dmcrypt-tests/1/jobs \
+					--iodepth_batch_complete 0 --runtime $RUNTIME
+			done
+		done
+	done
+	dm_remove $devname
+done
