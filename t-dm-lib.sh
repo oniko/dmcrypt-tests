@@ -56,6 +56,51 @@ function map_dmcrypt() {
 	dmsetup create $2 --table "$table"
 }
 
+# $1 chunk size
+# $2 target name (not only striped but experimental variants as well)
+# $@ devs
+function calculate_striped_table() {
+	local chsize=$1
+	shift
+	local tgt=$1
+	shift
+	local min_dev_size=$(blockdev --getsz $1)
+	local table_args="$1 0"
+	shift
+	local striped_dev_size=""
+	local tmp_size=""
+	local num_devs=1
+
+	for i in $@; do
+		tmp_size=$(blockdev --getsz $i)
+		test $tmp_size -ge $min_dev_size || min_dev_size=$tmp_size
+		table_args="$table_args $i 0"
+		num_devs=$((num_devs+1))
+	done
+
+	striped_dev_size=$[min_dev_size*num_devs]
+	striped_dev_size=$[striped_dev_size-(striped_dev_size%(chsize*num_devs))]
+
+	echo -n "0 $striped_dev_size $tgt $num_devs $chsize $table_args"
+}
+
+# $1 striped dev dm name
+# $2 striped target name (striped or striped-nomerge for our experiments)
+# $3 chunk size
+# $@ devices
+function map_striped() {
+	local dmname=$1
+	shift
+	local tgt=$1
+	shift
+	local chsize=$1
+	shift
+	local table=$(calculate_striped_table $chsize $tgt $@)
+	pdebug "creating $tgt device $dmname with table: $table"
+
+	dmsetup create $dmname --table "$table"
+}
+
 # credits to LVM2
 function STACKTRACE() {
 	trap - ERR
